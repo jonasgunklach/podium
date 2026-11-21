@@ -14,7 +14,9 @@ import app.podiumpodcasts.podium.api.db.model.PodcastModel
 import app.podiumpodcasts.podium.api.db.model.PodcastSubscriptionModel
 import app.podiumpodcasts.podium.api.model.PodcastPreviewModel
 import app.podiumpodcasts.podium.manager.AddPodcastResult
+import app.podiumpodcasts.podium.manager.DownloadManager
 import app.podiumpodcasts.podium.manager.PodcastManager
+import android.content.Context
 import coil3.compose.AsyncImagePainter
 import coil3.toBitmap
 import com.materialkolor.ktx.themeColorOrNull
@@ -26,6 +28,7 @@ import kotlinx.coroutines.withContext
 class PodcastSettingsViewModel : ViewModel() {
 
     fun toggleSubscriptionAutoDownload(
+        context: Context,
         db: AppDatabase,
         subscription: PodcastSubscriptionModel,
         enable: Boolean
@@ -33,6 +36,7 @@ class PodcastSettingsViewModel : ViewModel() {
         viewModelScope.launch {
             if(enable) {
                 db.podcastSubscriptions().enableAutoDownload(subscription.origin)
+                DownloadManager.autoDownloadBackfill(context, db, subscription.origin)
             } else {
                 db.podcastSubscriptions().disableAutoDownload(subscription.origin)
             }
@@ -40,12 +44,14 @@ class PodcastSettingsViewModel : ViewModel() {
     }
 
     fun setAutoDownloadLimit(
+        context: Context,
         db: AppDatabase,
         subscription: PodcastSubscriptionModel,
         limit: Int
     ) {
         viewModelScope.launch {
             db.podcastSubscriptions().setAutoDownloadLimit(subscription.origin, limit)
+            DownloadManager.autoDownloadBackfill(context, db, subscription.origin)
         }
     }
 

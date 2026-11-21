@@ -101,6 +101,18 @@ interface PodcastEpisodeDao {
     @Query("SELECT * FROM podcastEpisode WHERE new=1 ORDER BY pubDate DESC")
     fun allNew(): PagingSource<Int, PodcastEpisodeBundle>
 
+    // auto-download backfill: newest N unplayed, or (limit 0 = "All new") the ones still marked new
+    @Query(
+        """
+        SELECT e.* FROM podcastEpisode e
+        JOIN podcastEpisodePlayState p ON p.episodeId = e.id
+        WHERE e.origin = :origin AND p.played = 0 AND (:limit > 0 OR e.new = 1)
+        ORDER BY e.pubDate DESC
+        LIMIT CASE WHEN :limit > 0 THEN :limit ELSE -1 END
+    """
+    )
+    suspend fun autoDownloadCandidates(origin: String, limit: Int): List<PodcastEpisodeModel>
+
     // home: newest not-yet-started episodes of subscribed podcasts
     @Transaction
     @Query(

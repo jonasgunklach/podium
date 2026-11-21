@@ -20,6 +20,9 @@ import coil3.compose.AsyncImagePainter
 import com.materialkolor.ktx.themeColorOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import app.podiumpodcasts.podium.background.work.PodcastUpdateWork
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -139,6 +142,29 @@ fun HomeRoute(
     val latestEpisodes = remember { db.podcastEpisodes().latestUnplayed() }
         .collectAsState(null)
 
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val lastUpdate = remember { db.podcastSubscriptions().lastUpdate() }
+        .collectAsState(null)
+
+    val refreshing = remember { mutableStateOf(false) }
+    val refresh: () -> Unit = {
+        scope.launch {
+            refreshing.value = true
+            try {
+                // same work the periodic background update runs
+                withContext(Dispatchers.IO) {
+                    PodcastUpdateWork(context, db, settingsRepository).doWork()
+                }
+            } catch(e: Exception) {
+                e.printStackTrace()
+            } finally {
+                refreshing.value = false
+            }
+        }
+    }
+
     val loaded = remember { mutableStateOf(false) }
     LaunchedEffect(
         subscriptionsPager.loadState.isIdle,
@@ -257,10 +283,30 @@ fun HomeRoute(
                     Box(
                         Modifier.fillMaxSize()
                     ) {
-                        if(loaded.value) LazyColumn(
+                        if(loaded.value) PullToRefreshBox(
+                            isRefreshing = refreshing.value,
+                            onRefresh = refresh
+                        ) { LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             state = listState
                         ) {
+                            // always present: inserting it later would push the list's scroll anchor below it
+                            item(key = "LAST_CHECKED") {
+                                val millis = lastUpdate.value ?: 0L
+                                Text(
+                                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 4.dp),
+                                    text = when(millis > 0) {
+                                        true -> stringResource(
+                                            R.string.route_home_last_checked,
+                                            formatPubDate(context, millis / 1000)
+                                        )
+                                        false -> stringResource(R.string.route_home_pull_to_check)
+                                    },
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = Typography.labelMedium
+                                )
+                            }
+
                             if(!latestEpisodes.value.isNullOrEmpty()) item(
                                 key = "NEW_EPISODES"
                             ) {
@@ -367,7 +413,7 @@ fun HomeRoute(
                             item {
                                 FloatingMediaPlayerSpacer()
                             }
-                        }
+                        } }
                     }
                 }
             }

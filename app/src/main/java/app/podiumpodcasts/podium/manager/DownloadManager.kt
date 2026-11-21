@@ -72,6 +72,19 @@ class DownloadManager {
                 }
         }
 
+        /** Run right after the user enables auto-download or changes the count, so it doesn't wait for the next feed update. */
+        suspend fun autoDownloadBackfill(
+            context: Context,
+            db: AppDatabase,
+            origin: String
+        ) {
+            val subscription = db.podcastSubscriptions().getSync(origin) ?: return
+            autoDownloadNewEpisodes(
+                context, db, subscription,
+                db.podcastEpisodes().autoDownloadCandidates(origin, subscription.autoDownloadLimit)
+            )
+        }
+
         suspend fun deleteEpisodeDownload(
             context: Context,
             db: AppDatabase,

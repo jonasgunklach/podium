@@ -294,4 +294,6 @@
         <item quantity="other">Latest %d</item>
     </plurals>
     <string name="route_home_your_shows">Your shows</string>
+    <string name="route_home_last_checked">Checked %1$s</string>
+    <string name="route_home_pull_to_check">Pull down to check for new episodes</string>
 </resources>

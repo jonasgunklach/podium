@@ -294,4 +294,6 @@
         <item quantity="other">Neueste %d</item>
     </plurals>
     <string name="route_home_your_shows">Deine Shows</string>
+    <string name="route_home_last_checked">Zuletzt geprüft: %1$s</string>
+    <string name="route_home_pull_to_check">Zum Prüfen auf neue Episoden nach unten ziehen</string>
 </resources>

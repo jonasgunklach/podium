@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +68,7 @@ fun PodcastSettingsView(
     onBack: () -> Unit
 ) {
     val db = LocalDatabase.current
+    val context = LocalContext.current
 
     val vm = viewModel<PodcastSettingsViewModel>()
 
@@ -196,7 +198,7 @@ fun PodcastSettingsView(
                     SettingsSwitchListItem(
                         checked = subscription.enableAutoDownload,
                         onCheckedChange = {
-                            vm.toggleSubscriptionAutoDownload(db, subscription, it)
+                            vm.toggleSubscriptionAutoDownload(context, db, subscription, it)
                         },
 
                         icon = {
@@ -236,7 +238,7 @@ fun PodcastSettingsView(
                         valueRange = 0f..10f,
                         steps = 9,
                         onValueChangeFinished = {
-                            vm.setAutoDownloadLimit(db, subscription, limit.floatValue.toInt())
+                            vm.setAutoDownloadLimit(context, db, subscription, limit.floatValue.toInt())
                         },
 
                         trailingContent = {
