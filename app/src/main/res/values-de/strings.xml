@@ -296,4 +296,7 @@
     <string name="route_home_your_shows">Deine Shows</string>
     <string name="route_home_last_checked">Zuletzt geprüft: %1$s</string>
     <string name="route_home_pull_to_check">Zum Prüfen auf neue Episoden nach unten ziehen</string>
+    <string name="common_action_play_next">Als Nächstes abspielen</string>
+    <string name="player_up_next">Als Nächstes</string>
+    <string name="player_queue_empty">Nichts in der Warteschlange. Halte eine Episode gedrückt, um sie als Nächstes abzuspielen.</string>
 </resources>

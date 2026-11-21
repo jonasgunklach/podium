@@ -12,11 +12,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.Alignment
+import android.util.LruCache
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.ui.graphics.toArgb
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import app.podiumpodcasts.podium.ui.component.model.episode.PodcastEpisodeQueueMenu
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.core.graphics.drawable.toBitmap
-import coil3.asDrawable
-import coil3.compose.AsyncImagePainter
 import com.materialkolor.ktx.themeColorOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -315,7 +327,10 @@ fun HomeRoute(
                                     title = stringResource(R.string.route_new_episodes),
                                     onClickExpand = { onClickNewEpisodes() }
                                 ) {
+                                    val rowState = rememberLazyListState()
                                     LazyRow(
+                                        state = rowState,
+                                        flingBehavior = rememberSnapFlingBehavior(rowState, SnapPosition.Start),
                                         contentPadding = PaddingValues(horizontal = 16.dp),
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
@@ -342,7 +357,10 @@ fun HomeRoute(
                                     title = stringResource(R.string.route_continue_playing),
                                     onClickExpand = { onClickContinuePlaying() }
                                 ) {
+                                    val rowState = rememberLazyListState()
                                     LazyRow(
+                                        state = rowState,
+                                        flingBehavior = rememberSnapFlingBehavior(rowState, SnapPosition.Start),
                                         contentPadding = PaddingValues(horizontal = 16.dp),
                                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
@@ -430,7 +448,7 @@ private fun NewEpisodeCard(
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val (seedColor, onArtworkState) = rememberArtworkSeedColor(bundle.episode)
+    val seedColor = rememberArtworkSeedColor(bundle.episode)
 
     SwitchableDynamicMaterialExpressiveTheme(
         enable = enableArtworkColors,
@@ -438,22 +456,33 @@ private fun NewEpisodeCard(
     ) {
         val container = MaterialTheme.colorScheme.primaryContainer
 
+        val haptics = LocalHapticFeedback.current
+        var showQueueMenu by remember { mutableStateOf(false) }
         Card(
-            modifier = modifier.width(272.dp),
-            onClick = onClick,
+            modifier = modifier
+                .width(272.dp)
+                .clip(RoundedCornerShape(28.dp))
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showQueueMenu = true
+                    }
+                ),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
                 containerColor = container,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
         ) {
+            PodcastEpisodeQueueMenu(bundle, showQueueMenu) { showQueueMenu = false }
+
             Box {
                 ShimmerAsyncImage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(208.dp),
                     model = bundle.episode.imageUrl,
-                    onState = onArtworkState,
                     contentDescription = stringResource(R.string.common_cover_image),
                     contentScale = ContentScale.Crop
                 )
@@ -493,9 +522,13 @@ private fun NewEpisodeCard(
 
                 Spacer(Modifier.height(4.dp))
 
+                val description = remember(bundle.episode.description) {
+                    AnnotatedString.fromHtml(bundle.episode.description).text
+                        .replace(Regex("\\s+"), " ").trim()
+                }
+
                 Text(
-                    text = AnnotatedString.fromHtml(bundle.episode.description).text
-                        .replace(Regex("\\s+"), " ").trim(),
+                    text = description,
                     minLines = 2,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
@@ -527,21 +560,33 @@ private fun ContinuePlayingCard(
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val (seedColor, onArtworkState) = rememberArtworkSeedColor(bundle.episode)
+    val seedColor = rememberArtworkSeedColor(bundle.episode)
 
     SwitchableDynamicMaterialExpressiveTheme(
         enable = enableArtworkColors,
         seedColor = seedColor
     ) {
+        val haptics = LocalHapticFeedback.current
+        var showQueueMenu by remember { mutableStateOf(false) }
         Card(
-            modifier = modifier.width(328.dp),
-            onClick = onClick,
+            modifier = modifier
+                .width(328.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showQueueMenu = true
+                    }
+                ),
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
         ) {
+            PodcastEpisodeQueueMenu(bundle, showQueueMenu) { showQueueMenu = false }
+
             Row(
                 Modifier.padding(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -552,7 +597,6 @@ private fun ContinuePlayingCard(
                         .size(104.dp)
                         .clip(RoundedCornerShape(16.dp)),
                     model = bundle.episode.imageUrl,
-                    onState = onArtworkState,
                     contentDescription = stringResource(R.string.common_cover_image),
                     contentScale = ContentScale.Crop
                 )
@@ -582,26 +626,42 @@ private fun ContinuePlayingCard(
     }
 }
 
+// ponytail: process-wide cache so cards don't flash the podcast color and re-extract on every scroll-in
+private val artworkSeedCache = LruCache<String, Int>(256)
+
 /**
  * Seed color taken from the episode's own artwork (what the card shows),
- * falling back to the podcast cover color until the image is loaded.
+ * falling back to the podcast cover color until it's known.
  */
 @Composable
 private fun rememberArtworkSeedColor(
     episode: PodcastEpisodeModel
-): Pair<Color, (AsyncImagePainter.State) -> Unit> {
+): Color {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val url = episode.imageUrl
 
-    val seed = remember(episode.id) { mutableStateOf(Color(episode.imageSeedColor)) }
-
-    return seed.value to { state ->
-        if(state is AsyncImagePainter.State.Success) scope.launch(Dispatchers.Default) {
-            // ponytail: 64px is plenty for a dominant color and keeps carousel scrolling cheap
-            state.result.image.asDrawable(context.resources)
-                .toBitmap(64, 64).asImageBitmap()
-                .themeColorOrNull()
-                ?.let { seed.value = it }
-        }
+    var seed by remember(url) {
+        mutableStateOf(Color(url?.let { artworkSeedCache.get(it) } ?: episode.imageSeedColor))
     }
+
+    LaunchedEffect(url) {
+        if(url == null || artworkSeedCache.get(url) != null) return@LaunchedEffect
+
+        val result = SingletonImageLoader.get(context).execute(
+            ImageRequest.Builder(context)
+                .data(url)
+                .size(64)
+                .allowHardware(false)
+                .build()
+        )
+
+        val color = withContext(Dispatchers.Default) {
+            (result as? SuccessResult)?.image?.toBitmap()?.asImageBitmap()?.themeColorOrNull()
+        } ?: return@LaunchedEffect
+
+        artworkSeedCache.put(url, color.toArgb())
+        seed = color
+    }
+
+    return seed
 }

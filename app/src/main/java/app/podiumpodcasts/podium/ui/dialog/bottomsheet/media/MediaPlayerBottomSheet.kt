@@ -86,6 +86,9 @@ import app.podiumpodcasts.podium.ui.vm.MediaPlayerViewModel
 import app.podiumpodcasts.podium.ui.vm.SourceTypeState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.background
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -133,7 +136,7 @@ fun MediaPlayerBottomSheet(
 
     var showSleepTimerBottomSheet by remember { mutableStateOf(false) }
     var showSpeedBottomSheet by remember { mutableStateOf(false) }
-    var showQueueBottomSheet by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState { 2 }
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -156,6 +159,21 @@ fun MediaPlayerBottomSheet(
             sheetState = sheetState,
             onDismissRequest = onDismiss
         ) {
+            // page 0: player, page 1: up next
+            HorizontalPager(
+                state = pagerState,
+                beyondViewportPageCount = 1,
+                verticalAlignment = Alignment.Top
+            ) { page ->
+            if(page == 1) {
+                MediaPlayerQueuePage(
+                    onOpenEpisode = { origin, id ->
+                        dismissGracefully { onOpenEpisode(origin, id) }
+                    }
+                )
+                return@HorizontalPager
+            }
+
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -532,7 +550,7 @@ fun MediaPlayerBottomSheet(
                         contentPadding = ButtonDefaults.contentPaddingFor(size),
                         shapes = ButtonDefaults.shapesFor(size),
                         colors = colors,
-                        onClick = { showQueueBottomSheet = true }
+                        onClick = { scope.launch { pagerState.animateScrollToPage(1) } }
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically
@@ -553,6 +571,29 @@ fun MediaPlayerBottomSheet(
                     }
                 }
             }
+            }
+
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(pagerState.pageCount) { page ->
+                    Box(
+                        Modifier
+                            .padding(4.dp)
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(
+                                when(pagerState.currentPage == page) {
+                                    true -> MaterialTheme.colorScheme.primary
+                                    false -> MaterialTheme.colorScheme.outlineVariant
+                                }
+                            )
+                    )
+                }
+            }
         }
 
         if(showSleepTimerBottomSheet) MediaPlayerSleepTimerBottomSheet {
@@ -563,15 +604,6 @@ fun MediaPlayerBottomSheet(
             showSpeedBottomSheet = false
         }
 
-        if(showQueueBottomSheet) MediaPlayerQueueBottomSheet(
-            onOpenEpisode = { origin, id ->
-                dismissGracefully {
-                    onOpenEpisode(origin, id)
-                }
-            }
-        ) {
-            showQueueBottomSheet = false
-        }
     }
 }
 

@@ -54,6 +54,13 @@ android {
         debug {
             applicationIdSuffix = ".debug"
         }
+        // optimized (R8, non-debuggable) build that installs over the debug app and keeps its data
+        create("preview") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".debug"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

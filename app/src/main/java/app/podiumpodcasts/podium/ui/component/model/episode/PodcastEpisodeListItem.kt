@@ -21,6 +21,13 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,12 +60,22 @@ fun PodcastEpisodeListItem(
     colors: ListItemColors = ListItemDefaults.segmentedColors(),
     onClick: () -> Unit
 ) {
+    val haptics = LocalHapticFeedback.current
+    var showQueueMenu by remember { mutableStateOf(false) }
+
+    Box(modifier) {
+    PodcastEpisodeQueueMenu(bundle, showQueueMenu) { showQueueMenu = false }
+
     SegmentedListItem(
         modifier = if(count == 1)
-            modifier.clip(RoundedCornerShape(16.dp))
+            Modifier.clip(RoundedCornerShape(16.dp))
         else
-            modifier,
+            Modifier,
         onClick = onClick,
+        onLongClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            showQueueMenu = true
+        },
         shapes = ListItemDefaults.segmentedShapes(
             index = index,
             count = count
@@ -167,4 +184,5 @@ fun PodcastEpisodeListItem(
             }
         }
     }
+}
 }

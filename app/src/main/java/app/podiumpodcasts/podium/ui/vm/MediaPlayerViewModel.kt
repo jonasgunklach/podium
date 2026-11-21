@@ -106,17 +106,47 @@ class MediaPlayerViewModel : ViewModel() {
         context: Context,
         bundle: PodcastEpisodeBundle
     ) {
+        if(loadIfIdle(context, bundle)) return
+
         val mediaItem = bundle.createMediaItem(context)
 
         mediaController?.addMediaItem(mediaItem)
         syncQueue()
     }
 
+    /** Insert right after the current episode (moves it if it's already queued). */
+    fun playNext(
+        context: Context,
+        bundle: PodcastEpisodeBundle
+    ) {
+        if(loadIfIdle(context, bundle)) return
+        if(metadataEpisodeId == bundle.episode.id) return
+
+        dequeue(bundle.episode.id)
+        mediaController?.let {
+            it.addMediaItem(it.currentMediaItemIndex + 1, bundle.createMediaItem(context))
+        }
+        syncQueue()
+    }
+
+    // nothing loaded yet: make it the current episode (paused) instead of queueing behind nothing
+    private fun loadIfIdle(context: Context, bundle: PodcastEpisodeBundle): Boolean {
+        val controller = mediaController ?: return true
+        if(controller.mediaItemCount > 0) return false
+
+        controller.setMediaItem(
+            bundle.createMediaItem(context),
+            (bundle.playState?.state ?: 0) * 1000L
+        )
+        controller.prepare()
+        return true
+    }
+
     fun dequeue(
         episodeId: String
     ) {
         mediaController?.let { mediaController ->
-            for(index in 0..mediaController.mediaItemCount) {
+            for(index in 0 until mediaController.mediaItemCount) {
                 if(index == mediaController.currentMediaItemIndex) continue
 
                 val mediaItem = mediaController.getMediaItemAt(index)

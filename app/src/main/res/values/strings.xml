@@ -296,4 +296,7 @@
     <string name="route_home_your_shows">Your shows</string>
     <string name="route_home_last_checked">Checked %1$s</string>
     <string name="route_home_pull_to_check">Pull down to check for new episodes</string>
+    <string name="common_action_play_next">Play next</string>
+    <string name="player_up_next">Up next</string>
+    <string name="player_queue_empty">Nothing queued. Long-press an episode to play it next.</string>
 </resources>
