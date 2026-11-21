@@ -287,4 +287,11 @@
     <string name="route_settings_synchronization_enable">Aktivieren</string>
     <string name="route_settings_synchronization_full_synchronize">Vollständige Synchronisation starten</string>
     <string name="route_settings_synchronization_last_synced">Letzter Sync: %1$s</string>
+    <string name="view_podcast_settings_subscription_auto_download_limit">Anzahl Downloads</string>
+    <string name="view_podcast_settings_subscription_auto_download_limit_all">Alle neuen</string>
+    <plurals name="view_podcast_settings_subscription_auto_download_limit_latest">
+        <item quantity="one">Neueste %d</item>
+        <item quantity="other">Neueste %d</item>
+    </plurals>
+    <string name="route_home_your_shows">Deine Shows</string>
 </resources>

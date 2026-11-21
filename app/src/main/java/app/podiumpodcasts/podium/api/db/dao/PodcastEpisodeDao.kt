@@ -101,6 +101,19 @@ interface PodcastEpisodeDao {
     @Query("SELECT * FROM podcastEpisode WHERE new=1 ORDER BY pubDate DESC")
     fun allNew(): PagingSource<Int, PodcastEpisodeBundle>
 
+    // home: newest not-yet-started episodes of subscribed podcasts
+    @Transaction
+    @Query(
+        """
+        SELECT e.* FROM podcastEpisode e
+        JOIN podcastSubscription s ON s.origin = e.origin
+        JOIN podcastEpisodePlayState p ON p.episodeId = e.id
+        WHERE p.played = 0 AND p.state = 0
+        ORDER BY e.pubDate DESC LIMIT :limit
+    """
+    )
+    fun latestUnplayed(limit: Int = 20): Flow<List<PodcastEpisodeBundle>>
+
     @Query("SELECT * FROM podcastEpisode WHERE new=1 ORDER BY pubDate DESC LIMIT :limit OFFSET :offset")
     fun getNew(limit: Int, offset: Int): List<PodcastEpisodeBundle>
 

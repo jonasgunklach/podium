@@ -1,6 +1,20 @@
 package app.podiumpodcasts.podium.ui.route.library
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
+import androidx.paging.compose.itemKey
+import app.podiumpodcasts.podium.ui.component.model.SubscriptionCard
+import app.podiumpodcasts.podium.ui.theme.Typography
+import app.podiumpodcasts.podium.ui.vm.home.SubscriptionsViewModel
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -13,7 +27,6 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material3.Badge
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -38,7 +51,6 @@ import app.podiumpodcasts.podium.ui.component.model.list.ListLibraryItem
 import app.podiumpodcasts.podium.ui.dialog.bottomsheet.ListCreateBottomSheet
 import app.podiumpodcasts.podium.ui.helper.LocalDatabase
 import app.podiumpodcasts.podium.ui.vm.DownloadsViewModel
-import app.podiumpodcasts.podium.ui.vm.HistoryViewModel
 import app.podiumpodcasts.podium.ui.vm.home.ContinuePlayingViewModel
 import app.podiumpodcasts.podium.ui.vm.home.NewEpisodesViewModel
 import app.podiumpodcasts.podium.ui.vm.library.LibraryViewModel
@@ -63,15 +75,16 @@ fun LibraryRoute(
     val nonSystemLists = vm.nonSystemLists.collectAsLazyPagingItems()
 
     val downloadsVm = viewModel { DownloadsViewModel(db) }
-    val historyVm = viewModel { HistoryViewModel(db) }
     val continuePlayingVm = viewModel { ContinuePlayingViewModel(db) }
     val newEpisodesVm = viewModel { NewEpisodesViewModel(db) }
 
     val downloadsPager = remember { downloadsVm.downloads }.collectAsLazyPagingItems()
-    val historyPager = remember { historyVm.historyElements }.collectAsLazyPagingItems()
     val continuePlayingPager =
         remember { continuePlayingVm.continuePlaying }.collectAsLazyPagingItems()
     val newEpisodesPager = remember { newEpisodesVm.newEpisodes }.collectAsLazyPagingItems()
+
+    val subscriptionsVm = viewModel { SubscriptionsViewModel(db) }
+    val subscriptionsPager = remember { subscriptionsVm.subscriptions }.collectAsLazyPagingItems()
 
     val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
 
@@ -103,81 +116,46 @@ fun LibraryRoute(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item {
-                LibraryItem(
-                    title = stringResource(R.string.route_downloads),
-                    icon = Icons.Rounded.Download,
-                    contentDescription = stringResource(R.string.route_downloads),
-                    badge = {
-                        if(downloadsPager.itemCount > 0) Badge(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ) {
-                            Text(
-                                text = downloadsPager.itemCount.toString()
-                            )
-                        }
-                    },
-                    onClick = onClickDownloads
-                )
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Row(
+                    Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LibraryShortcut(Icons.Rounded.Download, stringResource(R.string.route_downloads), downloadsPager.itemCount, onClickDownloads)
+                    LibraryShortcut(Icons.Rounded.Pause, stringResource(R.string.route_continue_playing), continuePlayingPager.itemCount, onClickContinuePlaying)
+                    LibraryShortcut(Icons.Rounded.NewReleases, stringResource(R.string.route_new_episodes), newEpisodesPager.itemCount, onClickNewEpisodes)
+                    LibraryShortcut(Icons.Rounded.History, stringResource(R.string.route_history), 0, onClickHistory)
+                }
             }
 
-            item {
-                LibraryItem(
-                    title = stringResource(R.string.route_history),
-                    icon = Icons.Rounded.History,
-                    contentDescription = stringResource(R.string.route_history),
-                    badge = {
-                        if(historyPager.itemCount > 0) Badge(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ) {
-                            Text(
-                                text = historyPager.itemCount.toString()
-                            )
-                        }
-                    },
-                    onClick = onClickHistory
-                )
-            }
+            if(subscriptionsPager.itemCount > 0) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        modifier = Modifier.padding(top = 8.dp),
+                        text = stringResource(R.string.route_home_your_shows),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = Typography.titleMediumEmphasized
+                    )
+                }
 
-            item {
-                LibraryItem(
-                    title = stringResource(R.string.route_continue_playing),
-                    icon = Icons.Rounded.Pause,
-                    contentDescription = stringResource(R.string.route_continue_playing),
-                    badge = {
-                        if(continuePlayingPager.itemCount > 0) Badge(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ) {
-                            Text(
-                                text = continuePlayingPager.itemCount.toString()
-                            )
-                        }
-                    },
-                    onClick = onClickContinuePlaying
-                )
-            }
-
-            item {
-                LibraryItem(
-                    title = stringResource(R.string.route_new_episodes),
-                    icon = Icons.Rounded.NewReleases,
-                    contentDescription = stringResource(R.string.route_new_episodes),
-                    badge = {
-                        if(newEpisodesPager.itemCount > 0) Badge(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ) {
-                            Text(
-                                text = newEpisodesPager.itemCount.toString()
-                            )
-                        }
-                    },
-                    onClick = onClickNewEpisodes
-                )
+                items(
+                    subscriptionsPager.itemCount,
+                    key = subscriptionsPager.itemKey { it.podcast.origin }
+                ) {
+                    subscriptionsPager[it]?.let { bundle ->
+                        SubscriptionCard(
+                            modifier = Modifier.animateItem(),
+                            bundle = bundle,
+                            size = Dp.Unspecified,
+                            onClick = { onClickPodcast(bundle.podcast.origin) }
+                        )
+                    }
+                }
             }
 
             item(span = { GridItemSpan(maxLineSpan) }) {
                 HorizontalDivider(
-                    Modifier.padding(24.dp)
+                    Modifier.padding(vertical = 8.dp)
                 )
             }
 
@@ -227,5 +205,23 @@ fun LibraryRoute(
 
     if(vm.showListCreateBottomSheet.value) ListCreateBottomSheet {
         vm.showListCreateBottomSheet.value = false
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LibraryShortcut(
+    icon: ImageVector,
+    label: String,
+    count: Int,
+    onClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        shapes = ButtonDefaults.shapes()
+    ) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+        Text(if(count > 0) "$label · $count" else label)
     }
 }

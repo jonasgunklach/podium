@@ -80,18 +80,9 @@ class PodcastUpdateWork(
                         db.podcastEpisodePlayStates().initState(it.id)
                     }
 
-                    if(subscription.subscription.enableAutoDownload) newEpisodes.forEach {
-                        try {
-                            DownloadManager.downloadEpisode(
-                                context = context,
-                                db = db,
-                                episodeId = it.id,
-                                auto = true
-                            )
-                        } catch(e: Exception) {
-                            e.printStackTrace()
-                        }
-                    }
+                    DownloadManager.autoDownloadNewEpisodes(
+                        context, db, subscription.subscription, newEpisodes
+                    )
 
                     db.podcastSubscriptions()
                         .logUpdate(origin = origin)

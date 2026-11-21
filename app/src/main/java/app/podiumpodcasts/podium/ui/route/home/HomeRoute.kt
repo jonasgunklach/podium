@@ -1,6 +1,39 @@
 package app.podiumpodcasts.podium.ui.route.home
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
+import coil3.asDrawable
+import coil3.compose.AsyncImagePainter
+import com.materialkolor.ktx.themeColorOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.paging.compose.itemKey
+import app.podiumpodcasts.podium.api.db.model.PodcastEpisodeBundle
+import app.podiumpodcasts.podium.ui.component.common.SwitchableDynamicMaterialExpressiveTheme
+import app.podiumpodcasts.podium.ui.component.model.episode.PodcastEpisodeDownloadButton
+import app.podiumpodcasts.podium.ui.component.model.episode.PodcastEpisodePlayButton
+import app.podiumpodcasts.podium.ui.dialog.ShimmerAsyncImage
+import app.podiumpodcasts.podium.ui.formatPubDate
+import app.podiumpodcasts.podium.ui.theme.Typography
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -16,7 +49,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Explore
 import androidx.compose.material.icons.rounded.Podcasts
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -26,7 +58,6 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumExtendedFloatingActionButton
 import androidx.compose.material3.Scaffold
@@ -41,7 +72,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -60,13 +90,11 @@ import app.podiumpodcasts.podium.ui.component.media.FloatingMediaPlayerSpacer
 import app.podiumpodcasts.podium.ui.component.media.LocalFloatingMediaPlayerHeight
 import app.podiumpodcasts.podium.ui.component.model.PodcastCard
 import app.podiumpodcasts.podium.ui.component.model.SubscriptionCard
-import app.podiumpodcasts.podium.ui.component.model.episode.PodcastEpisodeListItem
 import app.podiumpodcasts.podium.ui.helper.LocalDatabase
 import app.podiumpodcasts.podium.ui.helper.LocalSettingsRepository
 import app.podiumpodcasts.podium.ui.helper.PagerScaffold
 import app.podiumpodcasts.podium.ui.vm.home.ContinuePlayingViewModel
 import app.podiumpodcasts.podium.ui.vm.home.LocallyAvailableViewModel
-import app.podiumpodcasts.podium.ui.vm.home.NewEpisodesViewModel
 import app.podiumpodcasts.podium.ui.vm.home.SubscriptionsViewModel
 
 @OptIn(
@@ -96,26 +124,31 @@ fun HomeRoute(
     val useAlternativeBranding = settingsRepository.appearance.useAlternativeBranding
         .collectAsState(false)
 
+    val enableArtworkColors = settingsRepository.appearance.enableArtworkColors
+        .collectAsState(true)
+
     val subscriptionsVm = viewModel { SubscriptionsViewModel(db) }
     val continuePlayingVm = viewModel { ContinuePlayingViewModel(db) }
-    val newEpisodesVm = viewModel { NewEpisodesViewModel(db) }
     val locallyAvailableVm = viewModel { LocallyAvailableViewModel(db) }
 
     val subscriptionsPager = subscriptionsVm.subscriptions.collectAsLazyPagingItems()
     val continuePlayingPager = continuePlayingVm.continuePlaying.collectAsLazyPagingItems()
-    val newEpisodesPager = newEpisodesVm.newEpisodes.collectAsLazyPagingItems()
     val locallyAvailablePager = locallyAvailableVm.locallyAvailable.collectAsLazyPagingItems()
+
+    // null until the first DB emission, so the list doesn't render (and anchor) before this section exists
+    val latestEpisodes = remember { db.podcastEpisodes().latestUnplayed() }
+        .collectAsState(null)
 
     val loaded = remember { mutableStateOf(false) }
     LaunchedEffect(
         subscriptionsPager.loadState.isIdle,
         continuePlayingPager.loadState.isIdle,
-        newEpisodesPager.loadState.isIdle,
-        locallyAvailablePager.loadState.isIdle
+        locallyAvailablePager.loadState.isIdle,
+        latestEpisodes.value != null
     ) {
+        if(latestEpisodes.value == null) return@LaunchedEffect
         if(!subscriptionsPager.loadState.isIdle) return@LaunchedEffect
         if(!continuePlayingPager.loadState.isIdle) return@LaunchedEffect
-        if(!newEpisodesPager.loadState.isIdle) return@LaunchedEffect
         if(!locallyAvailablePager.loadState.isIdle) return@LaunchedEffect
         loaded.value = true
     }
@@ -187,7 +220,6 @@ fun HomeRoute(
                 PagerScaffold(
                     subscriptionsPager,
                     continuePlayingPager,
-                    newEpisodesPager,
                     locallyAvailablePager,
                     isEmpty = {
                         InfoLayout(
@@ -229,25 +261,29 @@ fun HomeRoute(
                             modifier = Modifier.fillMaxSize(),
                             state = listState
                         ) {
-                            if(subscriptionsPager.itemCount > 0) item(
-                                key = "SUBSCRIPTIONS"
+                            if(!latestEpisodes.value.isNullOrEmpty()) item(
+                                key = "NEW_EPISODES"
                             ) {
-                                SectionCarousel(
+                                Section(
                                     modifier = Modifier.animateItem(),
-                                    title = stringResource(R.string.route_subscriptions),
-                                    onClickExpand = { onClickSubscriptions() }
+                                    title = stringResource(R.string.route_new_episodes),
+                                    onClickExpand = { onClickNewEpisodes() }
                                 ) {
-                                    items(subscriptionsPager.itemCount) {
-                                        val bundle = subscriptionsPager[it]
-                                            ?: return@items
-
-                                        SubscriptionCard(
-                                            modifier = Modifier.animateItem(),
-                                            bundle = bundle,
-                                            onClick = {
-                                                onClickPodcast(bundle.podcast.origin)
-                                            }
-                                        )
+                                    LazyRow(
+                                        contentPadding = PaddingValues(horizontal = 16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        items(
+                                            latestEpisodes.value.orEmpty(),
+                                            key = { it.episode.id }
+                                        ) { bundle ->
+                                            NewEpisodeCard(
+                                                modifier = Modifier.animateItem(),
+                                                bundle = bundle,
+                                                enableArtworkColors = enableArtworkColors.value,
+                                                onClick = { onClickEpisode(bundle.episode) }
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -258,116 +294,49 @@ fun HomeRoute(
                                 Section(
                                     modifier = Modifier.animateItem(),
                                     title = stringResource(R.string.route_continue_playing),
-                                    badge = {
-                                        Badge {
-                                            Text(
-                                                text = continuePlayingPager.itemCount.toString()
-                                            )
-                                        }
-                                    },
                                     onClickExpand = { onClickContinuePlaying() }
                                 ) {
-                                    val backgroundColor = MaterialTheme.colorScheme.background
-
-                                    val count = continuePlayingPager.itemCount.coerceAtMost(2)
-
-                                    Column(
-                                        Modifier
-                                            .padding(start = 16.dp, end = 16.dp)
-                                            .drawWithContent {
-                                                drawContent()
-
-                                                if(continuePlayingPager.itemCount > 2) drawRect(
-                                                    Brush.verticalGradient(
-                                                        listOf(
-                                                            Color.Transparent,
-                                                            backgroundColor
-                                                        )
-                                                    )
-                                                )
-                                            },
-                                        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
+                                    LazyRow(
+                                        contentPadding = PaddingValues(horizontal = 16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        repeat(count) {
-                                            val item = continuePlayingPager[it] ?: return@repeat
+                                        items(
+                                            continuePlayingPager.itemCount,
+                                            key = continuePlayingPager.itemKey { it.episode.id }
+                                        ) {
+                                            val item = continuePlayingPager[it] ?: return@items
 
-                                            PodcastEpisodeListItem(
+                                            ContinuePlayingCard(
+                                                modifier = Modifier.animateItem(),
                                                 bundle = item.toPodcastEpisodeBundle(),
-
-                                                descriptionText = item.episode.podcastTitle,
-
-                                                index = it,
-                                                count = count,
-
-                                                colors = ListItemDefaults.segmentedColors(
-                                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                                                ),
-
-                                                onClick = {
-                                                    onClickEpisode(item.episode)
-                                                }
+                                                enableArtworkColors = enableArtworkColors.value,
+                                                onClick = { onClickEpisode(item.episode) }
                                             )
                                         }
                                     }
                                 }
                             }
 
-                            if(newEpisodesPager.itemCount > 0) item(
-                                key = "NEW_EPISODES"
+                            if(subscriptionsPager.itemCount > 0) item(
+                                key = "SUBSCRIPTIONS"
                             ) {
-                                Section(
+                                SectionCarousel(
                                     modifier = Modifier.animateItem(),
-                                    title = stringResource(R.string.route_new_episodes),
-                                    badge = {
-                                        Badge {
-                                            Text(
-                                                text = newEpisodesPager.itemCount.toString()
-                                            )
-                                        }
-                                    },
-                                    onClickExpand = { onClickNewEpisodes() }
+                                    title = stringResource(R.string.route_home_your_shows),
+                                    onClickExpand = { onClickSubscriptions() }
                                 ) {
-                                    val backgroundColor = MaterialTheme.colorScheme.background
+                                    items(subscriptionsPager.itemCount) {
+                                        val bundle = subscriptionsPager[it]
+                                            ?: return@items
 
-                                    val count = newEpisodesPager.itemCount.coerceAtMost(2)
-
-                                    Column(
-                                        Modifier
-                                            .padding(start = 16.dp, end = 16.dp)
-                                            .drawWithContent {
-                                                drawContent()
-
-                                                if(newEpisodesPager.itemCount > 2) drawRect(
-                                                    Brush.verticalGradient(
-                                                        listOf(
-                                                            Color.Transparent,
-                                                            backgroundColor
-                                                        )
-                                                    )
-                                                )
-                                            },
-                                        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
-                                    ) {
-                                        repeat(count) {
-                                            val item = newEpisodesPager[it] ?: return@repeat
-
-                                            PodcastEpisodeListItem(
-                                                bundle = item,
-
-                                                descriptionText = item.episode.podcastTitle,
-
-                                                index = it,
-                                                count = count,
-
-                                                colors = ListItemDefaults.segmentedColors(
-                                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                                                ),
-
-                                                onClick = {
-                                                    onClickEpisode(item.episode)
-                                                }
-                                            )
-                                        }
+                                        SubscriptionCard(
+                                            modifier = Modifier.animateItem(),
+                                            bundle = bundle,
+                                            size = 144.dp,
+                                            onClick = {
+                                                onClickPodcast(bundle.podcast.origin)
+                                            }
+                                        )
                                     }
                                 }
                             }
@@ -402,6 +371,191 @@ fun HomeRoute(
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun NewEpisodeCard(
+    modifier: Modifier = Modifier,
+    bundle: PodcastEpisodeBundle,
+    enableArtworkColors: Boolean,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val (seedColor, onArtworkState) = rememberArtworkSeedColor(bundle.episode)
+
+    SwitchableDynamicMaterialExpressiveTheme(
+        enable = enableArtworkColors,
+        seedColor = seedColor
+    ) {
+        val container = MaterialTheme.colorScheme.primaryContainer
+
+        Card(
+            modifier = modifier.width(272.dp),
+            onClick = onClick,
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = container,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        ) {
+            Box {
+                ShimmerAsyncImage(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(208.dp),
+                    model = bundle.episode.imageUrl,
+                    onState = onArtworkState,
+                    contentDescription = stringResource(R.string.common_cover_image),
+                    contentScale = ContentScale.Crop
+                )
+
+                // fade artwork into the card color
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                0.45f to Color.Transparent,
+                                1f to container
+                            )
+                        )
+                )
+            }
+
+            Column(
+                Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp)
+            ) {
+                Text(
+                    text = "${formatPubDate(context, bundle.episode.pubDate)} · ${bundle.episode.podcastTitle}",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = Typography.labelMedium
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = bundle.episode.title,
+                    minLines = 2,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = Typography.titleMediumEmphasized
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = AnnotatedString.fromHtml(bundle.episode.description).text
+                        .replace(Regex("\\s+"), " ").trim(),
+                    minLines = 2,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = Typography.bodySmall
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PodcastEpisodePlayButton(bundle = bundle)
+
+                    Spacer(Modifier.weight(1f))
+
+                    PodcastEpisodeDownloadButton(icon = true, bundle = bundle)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ContinuePlayingCard(
+    modifier: Modifier = Modifier,
+    bundle: PodcastEpisodeBundle,
+    enableArtworkColors: Boolean,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val (seedColor, onArtworkState) = rememberArtworkSeedColor(bundle.episode)
+
+    SwitchableDynamicMaterialExpressiveTheme(
+        enable = enableArtworkColors,
+        seedColor = seedColor
+    ) {
+        Card(
+            modifier = modifier.width(328.dp),
+            onClick = onClick,
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        ) {
+            Row(
+                Modifier.padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ShimmerAsyncImage(
+                    modifier = Modifier
+                        .size(104.dp)
+                        .clip(RoundedCornerShape(16.dp)),
+                    model = bundle.episode.imageUrl,
+                    onState = onArtworkState,
+                    contentDescription = stringResource(R.string.common_cover_image),
+                    contentScale = ContentScale.Crop
+                )
+
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = "${formatPubDate(context, bundle.episode.pubDate)} · ${bundle.episode.podcastTitle}",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = Typography.labelMedium
+                    )
+
+                    Text(
+                        text = bundle.episode.title,
+                        minLines = 2,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = Typography.titleSmallEmphasized
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    PodcastEpisodePlayButton(bundle = bundle)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Seed color taken from the episode's own artwork (what the card shows),
+ * falling back to the podcast cover color until the image is loaded.
+ */
+@Composable
+private fun rememberArtworkSeedColor(
+    episode: PodcastEpisodeModel
+): Pair<Color, (AsyncImagePainter.State) -> Unit> {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val seed = remember(episode.id) { mutableStateOf(Color(episode.imageSeedColor)) }
+
+    return seed.value to { state ->
+        if(state is AsyncImagePainter.State.Success) scope.launch(Dispatchers.Default) {
+            // ponytail: 64px is plenty for a dominant color and keeps carousel scrolling cheap
+            state.result.image.asDrawable(context.resources)
+                .toBitmap(64, 64).asImageBitmap()
+                .themeColorOrNull()
+                ?.let { seed.value = it }
         }
     }
 }

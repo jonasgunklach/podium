@@ -17,6 +17,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.isSpecified
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import app.podiumpodcasts.podium.api.db.model.PodcastModel
@@ -28,6 +32,7 @@ import app.podiumpodcasts.podium.ui.theme.Typography
 fun PodcastCard(
     modifier: Modifier = Modifier,
     podcast: PodcastModel,
+    size: Dp = 96.dp,
     badge: @Composable () -> Unit = { },
     onClick: () -> Unit
 ) {
@@ -41,12 +46,12 @@ fun PodcastCard(
                     .clip(RoundedCornerShape(8.dp))
                     .clickable { onClick() }
                     .padding(8.dp)
-                    .width(96.dp)
+                    .then(if(size.isSpecified) Modifier.width(size) else Modifier.fillMaxWidth())
             ) {
                 ShimmerAsyncImage(
-                    modifier = Modifier
-                        .size(96.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                    // Dp.Unspecified = fill available width (grid cells)
+                    modifier = (if(size.isSpecified) Modifier.size(size) else Modifier.fillMaxWidth().aspectRatio(1f))
+                        .clip(RoundedCornerShape(if(size.isSpecified) 8.dp else 16.dp)),
 
                     model = podcast.imageUrl,
                     contentDescription = null,

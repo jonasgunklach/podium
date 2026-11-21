@@ -287,4 +287,11 @@
     <string name="view_podcast_settings_subscription_enable_automatic_downloads_description">New episodes will be downloaded automatically</string>
     <string name="view_podcast_settings_subscription_enable_notifications">Enable notifications</string>
     <string name="view_podcast_settings_subscription_enable_notifications_description">Receive notifications when new episodes get released</string>
+    <string name="view_podcast_settings_subscription_auto_download_limit">Episodes to download</string>
+    <string name="view_podcast_settings_subscription_auto_download_limit_all">All new</string>
+    <plurals name="view_podcast_settings_subscription_auto_download_limit_latest">
+        <item quantity="one">Latest %d</item>
+        <item quantity="other">Latest %d</item>
+    </plurals>
+    <string name="route_home_your_shows">Your shows</string>
 </resources>

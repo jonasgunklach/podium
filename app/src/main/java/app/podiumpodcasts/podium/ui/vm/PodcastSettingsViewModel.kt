@@ -39,6 +39,16 @@ class PodcastSettingsViewModel : ViewModel() {
         }
     }
 
+    fun setAutoDownloadLimit(
+        db: AppDatabase,
+        subscription: PodcastSubscriptionModel,
+        limit: Int
+    ) {
+        viewModelScope.launch {
+            db.podcastSubscriptions().setAutoDownloadLimit(subscription.origin, limit)
+        }
+    }
+
     fun toggleSubscriptionNotifications(
         db: AppDatabase,
         subscription: PodcastSubscriptionModel,
