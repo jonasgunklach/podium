@@ -36,6 +36,8 @@ import app.podiumpodcasts.podium.utils.getImageSeedColor
 import app.podiumpodcasts.podium.utils.getOrigin
 import app.podiumpodcasts.podium.utils.isDownload
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -277,6 +279,7 @@ class MediaPlayerViewModel : ViewModel() {
     }
 
     var autoplayPick by mutableStateOf<AutoplayPick?>(null)
+    private var autoplayJob: Job? = null
 
     // preview of what autoplay would pick after the last queued (or current) episode
     private fun refreshAutoplay() {
@@ -284,10 +287,14 @@ class MediaPlayerViewModel : ViewModel() {
         val lastId = queue.lastOrNull() ?: metadataEpisodeId ?: run { autoplayPick = null; return }
         val exclude = queue.toList() + listOfNotNull(metadataEpisodeId)
 
-        viewModelScope.launch {
-            autoplayPick = runCatching {
+        // queue changes arrive in bursts; a stale pick finishing last must not win
+        autoplayJob?.cancel()
+        autoplayJob = viewModelScope.launch {
+            val pick = runCatching {
                 AutoplayManager.pick(db, db.podcastEpisodes().getSync(lastId).episode, exclude)
             }.getOrNull()
+            ensureActive() // runCatching also swallows cancellation
+            autoplayPick = pick
         }
     }
 
