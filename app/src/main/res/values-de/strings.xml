@@ -141,6 +141,9 @@
     <string name="route_home">Startseite</string>
     <string name="route_home_empty_text">Füge Podcasts per RSS hinzu oder entdecke neue im Bereich „Entdecken“.</string>
     <string name="route_home_empty_title">Deine Bibliothek ist leer</string>
+    <string name="route_home_last_checked">Zuletzt geprüft: %1$s</string>
+    <string name="route_home_pull_to_check">Zum Prüfen auf neue Episoden nach unten ziehen</string>
+    <string name="route_home_your_shows">Deine Shows</string>
     <string name="route_import_invalid_file">Ungültige Datei</string>
     <string name="route_import_invalid_file_text_opml">Bitte wähle eine gültige .opml Datei aus</string>
     <string name="route_import_ompl">Importieren aus .opml</string>

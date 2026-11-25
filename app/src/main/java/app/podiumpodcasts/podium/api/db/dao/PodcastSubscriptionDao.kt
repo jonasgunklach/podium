@@ -24,6 +24,9 @@ interface PodcastSubscriptionDao {
     @Query("SELECT * FROM podcastSubscription ORDER BY lastUpdate ASC")
     suspend fun allSortedByLastUpdate(): List<PodcastSubscriptionBundle>
 
+    @Query("SELECT MAX(lastUpdate) FROM podcastSubscription")
+    fun lastUpdate(): Flow<Long?>
+
     @Query("SELECT origin FROM podcastSubscription")
     suspend fun allOrigins(): List<String>
 
