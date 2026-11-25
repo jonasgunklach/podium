@@ -299,4 +299,12 @@
     <string name="common_action_play_next">Play next</string>
     <string name="player_up_next">Up next</string>
     <string name="player_queue_empty">Nothing queued. Long-press an episode to play it next.</string>
+    <string name="common_action_mark_as_unplayed">Mark as unplayed</string>
+    <string name="common_action_remove_download">Remove download</string>
+    <string name="common_action_go_to_podcast">Go to podcast</string>
+    <string name="player_autoplay">Autoplay</string>
+    <string name="player_autoplay_description">Keep playing when the queue ends</string>
+    <string name="player_autoplay_then">Then</string>
+    <string name="player_autoplay_next_in_show">Next in %1$s</string>
+    <string name="player_autoplay_newest">Newest episode</string>
 </resources>

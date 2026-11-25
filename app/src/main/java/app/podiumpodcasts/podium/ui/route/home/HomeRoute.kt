@@ -342,6 +342,7 @@ fun HomeRoute(
                                                 modifier = Modifier.animateItem(),
                                                 bundle = bundle,
                                                 enableArtworkColors = enableArtworkColors.value,
+                                                onOpenPodcast = { onClickPodcast(bundle.episode.origin) },
                                                 onClick = { onClickEpisode(bundle.episode) }
                                             )
                                         }
@@ -374,6 +375,7 @@ fun HomeRoute(
                                                 modifier = Modifier.animateItem(),
                                                 bundle = item.toPodcastEpisodeBundle(),
                                                 enableArtworkColors = enableArtworkColors.value,
+                                                onOpenPodcast = { onClickPodcast(item.episode.origin) },
                                                 onClick = { onClickEpisode(item.episode) }
                                             )
                                         }
@@ -445,6 +447,7 @@ private fun NewEpisodeCard(
     modifier: Modifier = Modifier,
     bundle: PodcastEpisodeBundle,
     enableArtworkColors: Boolean,
+    onOpenPodcast: () -> Unit,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -475,7 +478,7 @@ private fun NewEpisodeCard(
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
         ) {
-            PodcastEpisodeQueueMenu(bundle, showQueueMenu) { showQueueMenu = false }
+            PodcastEpisodeQueueMenu(bundle, showQueueMenu, onOpenPodcast) { showQueueMenu = false }
 
             Box {
                 ShimmerAsyncImage(
@@ -557,6 +560,7 @@ private fun ContinuePlayingCard(
     modifier: Modifier = Modifier,
     bundle: PodcastEpisodeBundle,
     enableArtworkColors: Boolean,
+    onOpenPodcast: () -> Unit,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -585,7 +589,7 @@ private fun ContinuePlayingCard(
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             )
         ) {
-            PodcastEpisodeQueueMenu(bundle, showQueueMenu) { showQueueMenu = false }
+            PodcastEpisodeQueueMenu(bundle, showQueueMenu, onOpenPodcast) { showQueueMenu = false }
 
             Row(
                 Modifier.padding(12.dp),

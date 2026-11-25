@@ -16,6 +16,16 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Podcasts
+import androidx.compose.material.icons.rounded.RemoveDone
+import androidx.compose.material3.HorizontalDivider
+import app.podiumpodcasts.podium.manager.DownloadManager
+import app.podiumpodcasts.podium.ui.helper.LocalDatabase
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.QueuePlayNext
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -73,18 +83,27 @@ fun PodcastEpisodeQueueButton(
     }
 }
 
-/** Long-press menu for an episode: play next / add to end / remove from queue. */
+/** Long-press menu for an episode: queue, played state, download, go to podcast. */
 @Composable
 fun PodcastEpisodeQueueMenu(
     bundle: PodcastEpisodeBundle,
     expanded: Boolean,
+    onOpenPodcast: (() -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val db = LocalDatabase.current
+    val scope = rememberCoroutineScope()
     val vm = viewModel<MediaPlayerViewModel>()
 
     val inQueue = vm.queue.contains(bundle.episode.id)
     val isCurrent = vm.metadataEpisodeId == bundle.episode.id
+    val played = bundle.playState?.played == true
+
+    fun act(block: suspend () -> Unit) {
+        scope.launch { block() }
+        onDismiss()
+    }
 
     DropdownMenu(
         expanded = expanded,
@@ -93,26 +112,53 @@ fun PodcastEpisodeQueueMenu(
         if(!isCurrent) DropdownMenuItem(
             leadingIcon = { Icon(Icons.Rounded.QueuePlayNext, contentDescription = null) },
             text = { Text(stringResource(R.string.common_action_play_next)) },
-            onClick = {
-                vm.playNext(context, bundle)
-                onDismiss()
-            }
+            onClick = { act { vm.playNext(context, bundle) } }
         )
 
         if(!isCurrent && !inQueue) DropdownMenuItem(
             leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = null) },
             text = { Text(stringResource(R.string.common_action_add_to_queue)) },
-            onClick = {
-                vm.enqueue(context, bundle)
-                onDismiss()
-            }
+            onClick = { act { vm.enqueue(context, bundle) } }
         )
 
         if(inQueue) DropdownMenuItem(
             leadingIcon = { Icon(Icons.Rounded.PlaylistRemove, contentDescription = null) },
             text = { Text(stringResource(R.string.common_action_remove_from_queue)) },
+            onClick = { act { vm.dequeue(bundle.episode.id) } }
+        )
+
+        HorizontalDivider()
+
+        DropdownMenuItem(
+            leadingIcon = {
+                Icon(if(played) Icons.Rounded.RemoveDone else Icons.Rounded.Check, contentDescription = null)
+            },
+            text = {
+                Text(stringResource(if(played) R.string.common_action_mark_as_unplayed else R.string.common_action_mark_as_played))
+            },
+            onClick = { act { setEpisodePlayed(db, bundle, !played) } }
+        )
+
+        DropdownMenuItem(
+            leadingIcon = {
+                Icon(if(bundle.download == null) Icons.Rounded.Download else Icons.Rounded.Delete, contentDescription = null)
+            },
+            text = {
+                Text(stringResource(if(bundle.download == null) R.string.common_action_download else R.string.common_action_remove_download))
+            },
             onClick = {
-                vm.dequeue(bundle.episode.id)
+                act {
+                    if(bundle.download == null) DownloadManager.downloadEpisode(context, db, bundle.episode.id)
+                    else DownloadManager.deleteEpisodeDownload(context, db, bundle.episode)
+                }
+            }
+        )
+
+        if(onOpenPodcast != null) DropdownMenuItem(
+            leadingIcon = { Icon(Icons.Rounded.Podcasts, contentDescription = null) },
+            text = { Text(stringResource(R.string.common_action_go_to_podcast)) },
+            onClick = {
+                onOpenPodcast()
                 onDismiss()
             }
         )

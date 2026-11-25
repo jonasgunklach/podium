@@ -23,6 +23,8 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import app.podiumpodcasts.podium.api.db.AppDatabase
+import app.podiumpodcasts.podium.manager.AutoplayManager
+import app.podiumpodcasts.podium.manager.AutoplayPick
 import app.podiumpodcasts.podium.api.db.model.MediaMetadataExtra
 import app.podiumpodcasts.podium.api.db.model.PodcastEpisodeBundle
 import app.podiumpodcasts.podium.background.COMMAND_SET_SEEK_BACK_INCREMENT
@@ -274,6 +276,21 @@ class MediaPlayerViewModel : ViewModel() {
         return sleepTimerState
     }
 
+    var autoplayPick by mutableStateOf<AutoplayPick?>(null)
+
+    // preview of what autoplay would pick after the last queued (or current) episode
+    private fun refreshAutoplay() {
+        if(!::db.isInitialized) return
+        val lastId = queue.lastOrNull() ?: metadataEpisodeId ?: run { autoplayPick = null; return }
+        val exclude = queue.toList() + listOfNotNull(metadataEpisodeId)
+
+        viewModelScope.launch {
+            autoplayPick = runCatching {
+                AutoplayManager.pick(db, db.podcastEpisodes().getSync(lastId).episode, exclude)
+            }.getOrNull()
+        }
+    }
+
     fun syncQueue() {
         mediaController?.let { mediaController ->
             queue.clear()
@@ -290,6 +307,7 @@ class MediaPlayerViewModel : ViewModel() {
                     }
             }
         }
+        refreshAutoplay()
     }
 
     @Composable

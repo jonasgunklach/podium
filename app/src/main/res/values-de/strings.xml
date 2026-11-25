@@ -299,4 +299,12 @@
     <string name="common_action_play_next">Als Nächstes abspielen</string>
     <string name="player_up_next">Als Nächstes</string>
     <string name="player_queue_empty">Nichts in der Warteschlange. Halte eine Episode gedrückt, um sie als Nächstes abzuspielen.</string>
+    <string name="common_action_mark_as_unplayed">Als ungehört markieren</string>
+    <string name="common_action_remove_download">Download entfernen</string>
+    <string name="common_action_go_to_podcast">Zum Podcast</string>
+    <string name="player_autoplay">Automatisch weiterspielen</string>
+    <string name="player_autoplay_description">Weiterspielen, wenn die Warteschlange leer ist</string>
+    <string name="player_autoplay_then">Danach</string>
+    <string name="player_autoplay_next_in_show">Weiter in %1$s</string>
+    <string name="player_autoplay_newest">Neueste Episode</string>
 </resources>

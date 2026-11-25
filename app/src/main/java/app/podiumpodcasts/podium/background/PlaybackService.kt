@@ -30,6 +30,7 @@ import app.podiumpodcasts.podium.utils.getOrigin
 import app.podiumpodcasts.podium.utils.getResumeAt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import app.podiumpodcasts.podium.manager.AutoplayManager
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -253,6 +254,36 @@ class PlaybackService : MediaLibraryService() {
         mediaSession?.player?.seekTo(player.duration)
     }
 
+    // queue ran out: pick what plays next (see AutoplayManager)
+    private fun autoplayNext() {
+        val player = mediaSession?.player ?: return
+        val finishedId = getEpisodeId() ?: return
+
+        scope.launch {
+            try {
+                if(!settingsRepository.behavior.autoplay.first()) return@launch
+
+                db.podcastEpisodePlayStates().savePlayed(finishedId, true)
+                val finished = db.podcastEpisodes().getSync(finishedId).episode
+                val pick = AutoplayManager.pick(db, finished, listOf(finishedId)) ?: return@launch
+
+                withContext(Dispatchers.Main) {
+                    // the user started something else meanwhile
+                    if(player.playbackState != Player.STATE_ENDED) return@withContext
+
+                    player.setMediaItem(
+                        pick.bundle.createMediaItem(this@PlaybackService),
+                        (pick.bundle.playState?.state ?: 0) * 1000L
+                    )
+                    player.prepare()
+                    player.play()
+                }
+            } catch(e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     private fun getOrigin() = mediaSession?.player?.currentMediaItem?.getOrigin()
 
     private fun getEpisodeId() = mediaSession?.player?.currentMediaItem?.getEpisodeId()
@@ -302,6 +333,7 @@ class PlaybackService : MediaLibraryService() {
                     }
 
                     syncIfEnabled()
+                    autoplayNext()
                 }
 
                 super.onPlaybackStateChanged(playbackState)

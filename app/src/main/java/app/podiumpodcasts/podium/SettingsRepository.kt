@@ -40,6 +40,7 @@ object SettingsKeys {
     val BEHAVIOR_AUTO_DOWNLOADS_APPLY_SETTINGS =
         booleanPreferencesKey("behavior_auto_downloads_apply_settings")
     val BEHAVIOR_DELETE_PLAYED_DOWNLOADS = booleanPreferencesKey("behavior_delete_played_downloads")
+    val BEHAVIOR_AUTOPLAY = booleanPreferencesKey("behavior_autoplay")
     val BEHAVIOR_DELETE_DOWNLOADS_AFTER_SECONDS =
         intPreferencesKey("behavior_delete_downloads_after_seconds")
 
@@ -200,6 +201,13 @@ class SettingsRepository(val context: Context) {
             dataStore.edit { preferences ->
                 preferences[SettingsKeys.BEHAVIOR_AUTO_DOWNLOADS_APPLY_SETTINGS] = enable
             }
+
+        val autoplay: Flow<Boolean> = dataStore.data
+            .map { preferences -> preferences[SettingsKeys.BEHAVIOR_AUTOPLAY] ?: true }
+
+        suspend fun setAutoplay(enabled: Boolean) = dataStore.edit { preferences ->
+            preferences[SettingsKeys.BEHAVIOR_AUTOPLAY] = enabled
+        }
 
         val deletePlayedDownloads: Flow<Boolean> = dataStore.data
             .map { preferences ->
