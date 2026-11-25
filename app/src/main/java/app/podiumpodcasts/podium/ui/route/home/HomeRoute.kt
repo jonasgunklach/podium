@@ -527,7 +527,16 @@ private fun NewEpisodeCard(
 
                     Spacer(Modifier.weight(1f))
 
-                    PodcastEpisodeDownloadButton(icon = true, bundle = bundle)
+                    PodcastEpisodeDownloadButton(
+                        icon = true,
+                        bundle = bundle,
+                        iconColors = IconButtonDefaults.filledTonalIconToggleButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            checkedContainerColor = MaterialTheme.colorScheme.primary,
+                            checkedContentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
                 }
             }
         }
