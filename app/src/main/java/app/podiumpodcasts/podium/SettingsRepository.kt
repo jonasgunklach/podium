@@ -97,8 +97,10 @@ class SettingsRepository(val context: Context) {
             }
 
         suspend fun setUseAlternativeBranding(context: Context, enable: Boolean): Preferences {
-            val default = ComponentName(context.packageName, "${context.packageName}.Default")
-            val alias = ComponentName(context.packageName, "${context.packageName}.Alias")
+            // class names follow the code namespace, not the (debug-suffixed) applicationId
+            val namespace = AppActivity::class.java.`package`!!.name
+            val default = ComponentName(context.packageName, "$namespace.Default")
+            val alias = ComponentName(context.packageName, "$namespace.Alias")
 
             context.packageManager.setComponentEnabledSetting(
                 if(enable) alias else default,

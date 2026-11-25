@@ -116,7 +116,7 @@ class MediaPlayerViewModel : ViewModel() {
         episodeId: String
     ) {
         mediaController?.let { mediaController ->
-            for(index in 0..mediaController.mediaItemCount) {
+            for(index in 0 until mediaController.mediaItemCount) {
                 if(index == mediaController.currentMediaItemIndex) continue
 
                 val mediaItem = mediaController.getMediaItemAt(index)
