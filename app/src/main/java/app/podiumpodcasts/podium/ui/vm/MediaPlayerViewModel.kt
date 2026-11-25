@@ -23,6 +23,8 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import app.podiumpodcasts.podium.api.db.AppDatabase
+import app.podiumpodcasts.podium.manager.AutoplayManager
+import app.podiumpodcasts.podium.manager.AutoplayPick
 import app.podiumpodcasts.podium.api.db.model.MediaMetadataExtra
 import app.podiumpodcasts.podium.api.db.model.PodcastEpisodeBundle
 import app.podiumpodcasts.podium.background.COMMAND_SET_SEEK_BACK_INCREMENT
@@ -106,17 +108,47 @@ class MediaPlayerViewModel : ViewModel() {
         context: Context,
         bundle: PodcastEpisodeBundle
     ) {
+        if(loadIfIdle(context, bundle)) return
+
         val mediaItem = bundle.createMediaItem(context)
 
         mediaController?.addMediaItem(mediaItem)
         syncQueue()
     }
 
+    /** Insert right after the current episode (moves it if it's already queued). */
+    fun playNext(
+        context: Context,
+        bundle: PodcastEpisodeBundle
+    ) {
+        if(loadIfIdle(context, bundle)) return
+        if(metadataEpisodeId == bundle.episode.id) return
+
+        dequeue(bundle.episode.id)
+        mediaController?.let {
+            it.addMediaItem(it.currentMediaItemIndex + 1, bundle.createMediaItem(context))
+        }
+        syncQueue()
+    }
+
+    // nothing loaded yet: make it the current episode (paused) instead of queueing behind nothing
+    private fun loadIfIdle(context: Context, bundle: PodcastEpisodeBundle): Boolean {
+        val controller = mediaController ?: return true
+        if(controller.mediaItemCount > 0) return false
+
+        controller.setMediaItem(
+            bundle.createMediaItem(context),
+            (bundle.playState?.state ?: 0) * 1000L
+        )
+        controller.prepare()
+        return true
+    }
+
     fun dequeue(
         episodeId: String
     ) {
         mediaController?.let { mediaController ->
-            for(index in 0..mediaController.mediaItemCount) {
+            for(index in 0 until mediaController.mediaItemCount) {
                 if(index == mediaController.currentMediaItemIndex) continue
 
                 val mediaItem = mediaController.getMediaItemAt(index)
@@ -244,6 +276,21 @@ class MediaPlayerViewModel : ViewModel() {
         return sleepTimerState
     }
 
+    var autoplayPick by mutableStateOf<AutoplayPick?>(null)
+
+    // preview of what autoplay would pick after the last queued (or current) episode
+    private fun refreshAutoplay() {
+        if(!::db.isInitialized) return
+        val lastId = queue.lastOrNull() ?: metadataEpisodeId ?: run { autoplayPick = null; return }
+        val exclude = queue.toList() + listOfNotNull(metadataEpisodeId)
+
+        viewModelScope.launch {
+            autoplayPick = runCatching {
+                AutoplayManager.pick(db, db.podcastEpisodes().getSync(lastId).episode, exclude)
+            }.getOrNull()
+        }
+    }
+
     fun syncQueue() {
         mediaController?.let { mediaController ->
             queue.clear()
@@ -260,6 +307,7 @@ class MediaPlayerViewModel : ViewModel() {
                     }
             }
         }
+        refreshAutoplay()
     }
 
     @Composable

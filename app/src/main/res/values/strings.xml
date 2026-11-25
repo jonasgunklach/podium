@@ -19,11 +19,15 @@
     <string name="common_action_edit">Edit</string>
     <string name="common_action_enable_auto_download">Enable auto-download</string>
     <string name="common_action_expand">Expand</string>
+    <string name="common_action_go_to_podcast">Go to podcast</string>
     <string name="common_action_login">Log in</string>
     <string name="common_action_logout">Log out</string>
     <string name="common_action_mark_as_played">Mark as played</string>
+    <string name="common_action_mark_as_unplayed">Mark as unplayed</string>
     <string name="common_action_pause">Pause</string>
     <string name="common_action_play">Play</string>
+    <string name="common_action_play_next">Play next</string>
+    <string name="common_action_remove_download">Remove download</string>
     <string name="common_action_remove_from_favorites">Remove from favorites</string>
     <string name="common_action_remove_from_queue">Remove from queue</string>
     <string name="common_action_save">Save</string>
@@ -119,6 +123,13 @@
     <string name="orderby_duration">Duration</string>
     <string name="orderby_title">Title</string>
 
+    <string name="player_autoplay">Autoplay</string>
+    <string name="player_autoplay_description">Keep playing when the queue ends</string>
+    <string name="player_autoplay_newest">Newest episode</string>
+    <string name="player_autoplay_next_in_show">Next in %1$s</string>
+    <string name="player_autoplay_then">Then</string>
+    <string name="player_queue_empty">Nothing queued. Long-press an episode to play it next.</string>
+    <string name="player_up_next">Up next</string>
     <string name="route_add_podcast">Add podcast</string>
     <string name="route_continue_playing">Continue playing</string>
     <string name="route_continue_playing_empty_text">No episodes in progress right now. You’ve finished everything you started — time to find your next obsession!</string>

@@ -1,5 +1,7 @@
 package app.podiumpodcasts.podium.ui.component.model.episode
 
+import app.podiumpodcasts.podium.api.db.AppDatabase
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -32,42 +34,7 @@ fun PodcastEpisodeMarkAsPlayedButton(
             if(playState == null) return@FilledIconToggleButton
 
             scope.launch {
-                if(!playState.played) {
-                    db.podcastEpisodes()
-                        .unnewAndUpdateNewEpisodesCount(
-                            origin = bundle.episode.origin,
-                            episodeId = bundle.episode.id
-                        )
-                }
-
-                if(playState.played) {
-                    db.podcastEpisodePlayStates().set(
-                        bundle.episode.id, 0, false
-                    )
-
-                    db.syncActions()
-                        .addPlayState(
-                            origin = bundle.episode.origin,
-                            episodeId = bundle.episode.id,
-                            audioUrl = bundle.episode.audioUrl,
-                            duration = bundle.episode.duration,
-                            state = 0,
-                            played = false
-                        )
-                } else {
-                    db.podcastEpisodePlayStates()
-                        .savePlayed(bundle.episode.id, true)
-
-                    db.syncActions()
-                        .addPlayState(
-                            origin = bundle.episode.origin,
-                            episodeId = bundle.episode.id,
-                            audioUrl = bundle.episode.audioUrl,
-                            duration = bundle.episode.duration,
-                            state = bundle.episode.duration,
-                            played = true
-                        )
-                }
+                setEpisodePlayed(db, bundle, !playState.played)
             }
         },
 
@@ -77,5 +44,47 @@ fun PodcastEpisodeMarkAsPlayedButton(
             imageVector = Icons.Rounded.Check,
             contentDescription = stringResource(R.string.common_action_mark_as_played)
         )
+    }
+}
+
+/** Mark played/unplayed, including the "new" flag and the sync action. Shared by the button and the long-press menu. */
+suspend fun setEpisodePlayed(
+    db: AppDatabase,
+    bundle: PodcastEpisodeBundle,
+    played: Boolean
+) {
+    if(played) {
+        db.podcastEpisodes()
+            .unnewAndUpdateNewEpisodesCount(
+                origin = bundle.episode.origin,
+                episodeId = bundle.episode.id
+            )
+
+        db.podcastEpisodePlayStates()
+            .savePlayed(bundle.episode.id, true)
+
+        db.syncActions()
+            .addPlayState(
+                origin = bundle.episode.origin,
+                episodeId = bundle.episode.id,
+                audioUrl = bundle.episode.audioUrl,
+                duration = bundle.episode.duration,
+                state = bundle.episode.duration,
+                played = true
+            )
+    } else {
+        db.podcastEpisodePlayStates().set(
+            bundle.episode.id, 0, false
+        )
+
+        db.syncActions()
+            .addPlayState(
+                origin = bundle.episode.origin,
+                episodeId = bundle.episode.id,
+                audioUrl = bundle.episode.audioUrl,
+                duration = bundle.episode.duration,
+                state = 0,
+                played = false
+            )
     }
 }

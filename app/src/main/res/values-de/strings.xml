@@ -19,10 +19,14 @@
     <string name="common_action_edit">Bearbeiten</string>
     <string name="common_action_enable_auto_download">Auto-Download aktivieren</string>
     <string name="common_action_expand">Erweitern</string>
+    <string name="common_action_go_to_podcast">Zum Podcast</string>
     <string name="common_action_logout">Ausloggen</string>
     <string name="common_action_mark_as_played">Als gehört markieren</string>
+    <string name="common_action_mark_as_unplayed">Als ungehört markieren</string>
     <string name="common_action_pause">Pause</string>
     <string name="common_action_play">Abspielen</string>
+    <string name="common_action_play_next">Als Nächstes abspielen</string>
+    <string name="common_action_remove_download">Download entfernen</string>
     <string name="common_action_remove_from_favorites">Aus Favoriten entfernen</string>
     <string name="common_action_remove_from_queue">Aus Warteschlange entfernen</string>
     <string name="common_action_save">Speichern</string>
@@ -118,6 +122,13 @@
     <string name="orderby_duration">Dauer</string>
     <string name="orderby_title">Titel</string>
 
+    <string name="player_autoplay">Automatisch weiterspielen</string>
+    <string name="player_autoplay_description">Weiterspielen, wenn die Warteschlange leer ist</string>
+    <string name="player_autoplay_newest">Neueste Episode</string>
+    <string name="player_autoplay_next_in_show">Weiter in %1$s</string>
+    <string name="player_autoplay_then">Danach</string>
+    <string name="player_queue_empty">Nichts in der Warteschlange. Halte eine Episode gedrückt, um sie als Nächstes abzuspielen.</string>
+    <string name="player_up_next">Als Nächstes</string>
     <string name="route_add_podcast">Podcast hinzufügen</string>
     <string name="route_continue_playing">Weiterhören</string>
     <string name="route_continue_playing_empty_text">Aktuell keine angefangenen Episoden. Du hast alles gehört — Zeit für etwas Neues!</string>

@@ -126,6 +126,44 @@ interface PodcastEpisodeDao {
     )
     fun search(query: String): PagingSource<Int, PodcastEpisodeBundle>
 
+    // autoplay: next newer unplayed episode of the same show
+    @Transaction
+    @Query(
+        """
+        SELECT e.* FROM podcastEpisode e
+        JOIN podcastEpisodePlayState p ON p.episodeId = e.id
+        WHERE e.origin = :origin AND e.pubDate > :afterPubDate AND p.played = 0
+          AND e.id NOT IN (:exclude)
+        ORDER BY e.pubDate ASC LIMIT 1
+    """
+    )
+    suspend fun nextUnplayedInShow(origin: String, afterPubDate: Long, exclude: List<String>): PodcastEpisodeBundle?
+
+    // autoplay: most recently touched unfinished episode
+    @Transaction
+    @Query(
+        """
+        SELECT e.* FROM podcastEpisode e
+        JOIN podcastEpisodePlayState p ON p.episodeId = e.id
+        WHERE p.played = 0 AND p.state > 0 AND e.id NOT IN (:exclude)
+        ORDER BY p.lastUpdate DESC LIMIT 1
+    """
+    )
+    suspend fun lastContinuePlaying(exclude: List<String>): PodcastEpisodeBundle?
+
+    // autoplay: newest not-yet-started episode of a subscribed show
+    @Transaction
+    @Query(
+        """
+        SELECT e.* FROM podcastEpisode e
+        JOIN podcastSubscription s ON s.origin = e.origin
+        JOIN podcastEpisodePlayState p ON p.episodeId = e.id
+        WHERE p.played = 0 AND p.state = 0 AND e.id NOT IN (:exclude)
+        ORDER BY e.pubDate DESC LIMIT 1
+    """
+    )
+    suspend fun newestUnplayed(exclude: List<String>): PodcastEpisodeBundle?
+
     @Transaction
     suspend fun newAndUpdateNewEpisodesCount(
         origin: String, episodeId: String
