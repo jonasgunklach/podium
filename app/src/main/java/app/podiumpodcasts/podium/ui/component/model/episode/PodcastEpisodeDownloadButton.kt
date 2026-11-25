@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.Downloading
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,7 +50,8 @@ private val stateMap = mapOf(
 @Composable
 fun PodcastEpisodeDownloadButton(
     icon: Boolean,
-    bundle: PodcastEpisodeBundle
+    bundle: PodcastEpisodeBundle,
+    iconColors: IconToggleButtonColors = IconButtonDefaults.filledTonalIconToggleButtonColors()
 ) {
     val scope = rememberCoroutineScope()
 
@@ -117,7 +119,7 @@ fun PodcastEpisodeDownloadButton(
             state = animateState.value,
             minimumState = 0f,
             checked = bundle.download != null,
-            colors = IconButtonDefaults.filledTonalIconToggleButtonColors(),
+            colors = iconColors,
             onCheckedChange = { onCheckedChange() },
             content = { inner() }
         )
