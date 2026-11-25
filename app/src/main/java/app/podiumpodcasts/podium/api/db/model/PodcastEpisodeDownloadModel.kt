@@ -30,7 +30,10 @@ data class PodcastEpisodeDownloadModel(
     @ColumnInfo("size")
     val size: Long,
     @ColumnInfo("timestamp")
-    val timestamp: Long
+    val timestamp: Long,
+    // true = downloaded by auto-download (may be cleaned up), false = the user asked for it
+    @ColumnInfo("auto", defaultValue = "0")
+    val auto: Boolean = false
 ) {
     fun parseState(): PodcastEpisodeDownloadState {
         return PodcastEpisodeDownloadState.entries.find { it.value == state }!!

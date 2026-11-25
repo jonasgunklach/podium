@@ -37,7 +37,7 @@ class DownloadManager {
             auto: Boolean = false
         ) {
             db.podcastEpisodeDownloads()
-                .add(episodeId)
+                .add(episodeId, auto)
 
             PodcastEpisodeDownloadWorker.enqueueDownload(
                 context = context,
@@ -70,6 +70,23 @@ class DownloadManager {
                         e.printStackTrace()
                     }
                 }
+
+            cleanupOutdatedAutoDownloads(context, db, subscription)
+        }
+
+        /** "Remove older automatic downloads": drop auto-downloads that fell out of the latest N. */
+        suspend fun cleanupOutdatedAutoDownloads(
+            context: Context,
+            db: AppDatabase,
+            subscription: PodcastSubscriptionModel?
+        ) {
+            if(subscription == null) return
+            if(!subscription.enableAutoDownload || !subscription.autoDownloadRemoveOlder) return
+            if(subscription.autoDownloadLimit <= 0) return // "All new" has no "older"
+
+            db.podcastEpisodes()
+                .outdatedAutoDownloads(subscription.origin, subscription.autoDownloadLimit)
+                .forEach { deleteEpisodeDownload(context, db, it) }
         }
 
         /** Run right after the user enables auto-download or changes the count, so it doesn't wait for the next feed update. */

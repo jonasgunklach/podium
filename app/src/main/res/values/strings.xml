@@ -289,6 +289,8 @@
         <item quantity="one">Latest %d</item>
         <item quantity="other">Latest %d</item>
     </plurals>
+    <string name="view_podcast_settings_subscription_auto_download_remove_older">Remove older automatic downloads</string>
+    <string name="view_podcast_settings_subscription_auto_download_remove_older_description">Keep only the latest episodes from above. Episodes you downloaded yourself or are listening to stay.</string>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads">Enable automatic downloads</string>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads_description">New episodes will be downloaded automatically</string>
     <string name="view_podcast_settings_subscription_enable_notifications">Enable notifications</string>
