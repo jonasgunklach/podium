@@ -22,13 +22,20 @@ class PodcastEpisodeDownloadWork(
     var lastProgressUpdate = 0L
 
     suspend fun doWork(
-        episodeId: String
+        episodeId: String,
+        auto: Boolean = false
     ): Boolean {
         val bundle = db.podcastEpisodes().getSync(episodeId)
         val episode = bundle.episode
 
         if(bundle.download == null)
             return false
+
+        // auto downloads wait for Wi-Fi; if the episode got played (streamed / synced) meanwhile, drop it
+        if(auto && bundle.playState?.played == true) {
+            db.podcastEpisodeDownloads().delete(episodeId)
+            return true
+        }
 
         delay(1000)
 

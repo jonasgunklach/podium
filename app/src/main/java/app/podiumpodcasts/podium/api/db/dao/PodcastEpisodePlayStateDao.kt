@@ -45,6 +45,6 @@ interface PodcastEpisodePlayStateDao {
     suspend fun getContinuePlayingSync(limit: Int, offset: Int): List<PodcastPlayStateBundle>
 
     @Query("SELECT * FROM podcastEpisodePlayState WHERE episodeId=:episodeId")
-    suspend fun get(episodeId: String): PodcastEpisodePlayStateModel
+    suspend fun get(episodeId: String): PodcastEpisodePlayStateModel?
 
 }

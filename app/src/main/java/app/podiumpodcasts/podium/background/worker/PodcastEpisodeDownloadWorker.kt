@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 const val KEY_EPISODE_ID = "KEY_EPISODE_ID"
+const val KEY_AUTO = "KEY_AUTO"
 
 class PodcastEpisodeDownloadWorker(
     context: Context,
@@ -38,7 +39,7 @@ class PodcastEpisodeDownloadWorker(
                 ?: throw NullPointerException()
 
             val worker = PodcastEpisodeDownloadWork(applicationContext, db)
-            val result = worker.doWork(episodeId)
+            val result = worker.doWork(episodeId, inputData.getBoolean(KEY_AUTO, false))
 
             if(result) {
                 Result.success()
@@ -68,7 +69,8 @@ class PodcastEpisodeDownloadWorker(
                 settingsRepository.behavior.applySettingsForAutoDownloads.first()
 
             val podcastData = workDataOf(
-                KEY_EPISODE_ID to episodeId
+                KEY_EPISODE_ID to episodeId,
+                KEY_AUTO to auto
             )
 
             val networkType = when(downloadMetered) {

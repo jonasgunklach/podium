@@ -1,6 +1,7 @@
 package app.podiumpodcasts.podium.ui.vm
 
 import android.content.Context
+import app.podiumpodcasts.podium.manager.DownloadManager
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.getValue
@@ -116,10 +117,11 @@ class PodcastDetailViewModel(
         }
     }
 
-    fun enableAutoDownload() {
+    fun enableAutoDownload(context: Context) {
         viewModelScope.launch {
             db.podcastSubscriptions()
                 .enableAutoDownload(podcast.origin)
+            DownloadManager.autoDownloadBackfill(context, db, podcast.origin)
         }
     }
 

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.SkipNext
@@ -35,12 +36,15 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,6 +55,7 @@ import app.podiumpodcasts.podium.ui.component.common.BackButton
 import app.podiumpodcasts.podium.ui.component.settings.SettingsHeader
 import app.podiumpodcasts.podium.ui.component.settings.SettingsListItem
 import app.podiumpodcasts.podium.ui.component.settings.SettingsSecondsSliderListItem
+import app.podiumpodcasts.podium.ui.component.settings.SettingsSliderListItem
 import app.podiumpodcasts.podium.ui.component.settings.SettingsSwitchListItem
 import app.podiumpodcasts.podium.ui.helper.LocalDatabase
 import app.podiumpodcasts.podium.ui.vm.PodcastSettingsViewModel
@@ -63,6 +68,7 @@ fun PodcastSettingsView(
     onBack: () -> Unit
 ) {
     val db = LocalDatabase.current
+    val context = LocalContext.current
 
     val vm = viewModel<PodcastSettingsViewModel>()
 
@@ -192,7 +198,7 @@ fun PodcastSettingsView(
                     SettingsSwitchListItem(
                         checked = subscription.enableAutoDownload,
                         onCheckedChange = {
-                            vm.toggleSubscriptionAutoDownload(db, subscription, it)
+                            vm.toggleSubscriptionAutoDownload(context, db, subscription, it)
                         },
 
                         icon = {
@@ -205,7 +211,49 @@ fun PodcastSettingsView(
                         description = stringResource(R.string.view_podcast_settings_subscription_enable_automatic_downloads_description),
 
                         index = 0,
-                        count = 2
+                        count = 3
+                    )
+                }
+
+                item {
+                    val limit = remember { mutableFloatStateOf(0f) }
+                    LaunchedEffect(subscription.autoDownloadLimit) {
+                        limit.floatValue = subscription.autoDownloadLimit.toFloat()
+                    }
+
+                    SettingsSliderListItem(
+                        icon = {
+                            Icon(
+                                Icons.Rounded.Numbers,
+                                stringResource(R.string.view_podcast_settings_subscription_auto_download_limit)
+                            )
+                        },
+                        label = stringResource(R.string.view_podcast_settings_subscription_auto_download_limit),
+
+                        enabled = subscription.enableAutoDownload,
+
+                        // 0 = all new episodes
+                        value = limit.floatValue,
+                        onValueChange = { limit.floatValue = it },
+                        valueRange = 0f..10f,
+                        steps = 9,
+                        onValueChangeFinished = {
+                            vm.setAutoDownloadLimit(context, db, subscription, limit.floatValue.toInt())
+                        },
+
+                        trailingContent = {
+                            Text(
+                                when(val n = limit.floatValue.toInt()) {
+                                    0 -> stringResource(R.string.view_podcast_settings_subscription_auto_download_limit_all)
+                                    else -> pluralStringResource(
+                                        R.plurals.view_podcast_settings_subscription_auto_download_limit_latest, n, n
+                                    )
+                                }
+                            )
+                        },
+
+                        index = 1,
+                        count = 3
                     )
                 }
 
@@ -225,8 +273,8 @@ fun PodcastSettingsView(
                         label = stringResource(R.string.view_podcast_settings_subscription_enable_notifications),
                         description = stringResource(R.string.view_podcast_settings_subscription_enable_notifications_description),
 
-                        index = 1,
-                        count = 2
+                        index = 2,
+                        count = 3
                     )
                 }
 

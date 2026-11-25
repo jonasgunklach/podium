@@ -42,14 +42,9 @@ class SingularPodcastUpdateWork(
             db.podcastEpisodePlayStates().initState(it.id)
         }
 
-        val subscription = db.podcastSubscriptions().getSync(podcast.origin)
-        if(subscription?.enableAutoDownload == true) newEpisodes.forEach {
-            try {
-                DownloadManager.downloadEpisode(context, db, it.id)
-            } catch(e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        DownloadManager.autoDownloadNewEpisodes(
+            context, db, db.podcastSubscriptions().getSync(podcast.origin), newEpisodes
+        )
 
         db.podcastSubscriptions()
             .logUpdate(origin = podcast.origin)

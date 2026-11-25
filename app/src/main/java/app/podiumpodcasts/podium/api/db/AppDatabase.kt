@@ -40,7 +40,7 @@ import app.podiumpodcasts.podium.api.db.model.statistics.UpdatePodcastRunModel
         UpdatePodcastRunModel::class,
 
         SyncActionModel::class
-    ], version = 15
+    ], version = 16
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun podcasts(): PodcastDao
@@ -254,6 +254,14 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
     }
 }
 
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE podcastSubscription ADD COLUMN autoDownloadLimit INTEGER NOT NULL DEFAULT 0"
+        )
+    }
+}
+
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
     MIGRATION_2_3,
@@ -268,5 +276,6 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_11_12,
     MIGRATION_12_13,
     MIGRATION_13_14,
-    MIGRATION_14_15
+    MIGRATION_14_15,
+    MIGRATION_15_16
 )

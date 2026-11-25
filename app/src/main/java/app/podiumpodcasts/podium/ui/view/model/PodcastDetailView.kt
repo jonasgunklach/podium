@@ -421,7 +421,7 @@ fun PodcastDetailView(
                                                 onCheckedChange = {
                                                     when(enableAutoDownload) {
                                                         true -> vm.disableAutoDownload()
-                                                        false -> vm.enableAutoDownload()
+                                                        false -> vm.enableAutoDownload(activity)
                                                     }
                                                 },
 

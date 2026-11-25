@@ -32,5 +32,8 @@ data class PodcastSubscriptionModel(
     @ColumnInfo("cacheLastModified")
     val cacheLastModified: String = "",
     @ColumnInfo("cacheContentLength")
-    val cacheContentLength: String = ""
+    val cacheContentLength: String = "",
+    // 0 = download every new episode
+    @ColumnInfo("autoDownloadLimit", defaultValue = "0")
+    val autoDownloadLimit: Int = 0
 )

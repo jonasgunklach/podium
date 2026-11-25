@@ -283,6 +283,12 @@
     <string name="view_podcast_settings_playback_skip_begin_of_show">Skip begin of show</string>
     <string name="view_podcast_settings_playback_skp_end_of_show">Skip end of show</string>
     <string name="view_podcast_settings_subscription">Subscription</string>
+    <string name="view_podcast_settings_subscription_auto_download_limit">Episodes to download</string>
+    <string name="view_podcast_settings_subscription_auto_download_limit_all">All new</string>
+    <plurals name="view_podcast_settings_subscription_auto_download_limit_latest">
+        <item quantity="one">Latest %d</item>
+        <item quantity="other">Latest %d</item>
+    </plurals>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads">Enable automatic downloads</string>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads_description">New episodes will be downloaded automatically</string>
     <string name="view_podcast_settings_subscription_enable_notifications">Enable notifications</string>

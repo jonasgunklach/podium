@@ -61,4 +61,7 @@ interface PodcastSubscriptionDao {
 
     @Query("UPDATE podcastSubscription SET enableAutoDownload = 0 WHERE origin=:origin")
     suspend fun disableAutoDownload(origin: String)
+
+    @Query("UPDATE podcastSubscription SET autoDownloadLimit = :limit WHERE origin=:origin")
+    suspend fun setAutoDownloadLimit(origin: String, limit: Int)
 }
