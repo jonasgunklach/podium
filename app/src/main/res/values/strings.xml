@@ -283,6 +283,8 @@
     <string name="view_podcast_settings_playback_skip_begin_of_show">Skip begin of show</string>
     <string name="view_podcast_settings_playback_skp_end_of_show">Skip end of show</string>
     <string name="view_podcast_settings_subscription">Subscription</string>
+    <string name="view_podcast_settings_subscription_auto_download_remove_older">Remove older automatic downloads</string>
+    <string name="view_podcast_settings_subscription_auto_download_remove_older_description">Keep only the latest episodes from above. Episodes you downloaded yourself or are listening to stay.</string>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads">Enable automatic downloads</string>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads_description">New episodes will be downloaded automatically</string>
     <string name="view_podcast_settings_subscription_enable_notifications">Enable notifications</string>

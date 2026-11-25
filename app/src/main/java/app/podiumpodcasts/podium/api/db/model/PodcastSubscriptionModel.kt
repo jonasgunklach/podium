@@ -35,5 +35,8 @@ data class PodcastSubscriptionModel(
     val cacheContentLength: String = "",
     // 0 = download every new episode
     @ColumnInfo("autoDownloadLimit", defaultValue = "0")
-    val autoDownloadLimit: Int = 0
+    val autoDownloadLimit: Int = 0,
+    // remove auto-downloads that fall out of the latest [autoDownloadLimit]
+    @ColumnInfo("autoDownloadRemoveOlder", defaultValue = "0")
+    val autoDownloadRemoveOlder: Boolean = false
 )

@@ -277,6 +277,8 @@
     <string name="view_podcast_settings_playback_skip_begin_of_show">Anfang der Episoden überspringen</string>
     <string name="view_podcast_settings_playback_skp_end_of_show">Ende der Episoden überspringen</string>
     <string name="view_podcast_settings_subscription">Abonnement</string>
+    <string name="view_podcast_settings_subscription_auto_download_remove_older">Ältere automatische Downloads entfernen</string>
+    <string name="view_podcast_settings_subscription_auto_download_remove_older_description">Nur die neuesten Episoden von oben behalten. Selbst geladene und angefangene Episoden bleiben.</string>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads">Automatische Downloads aktivieren</string>
     <string name="view_podcast_settings_subscription_enable_automatic_downloads_description">Neue Episoden automatisch herunterladen</string>
     <string name="view_podcast_settings_subscription_enable_notifications">Benachrichtigungen aktivieren</string>

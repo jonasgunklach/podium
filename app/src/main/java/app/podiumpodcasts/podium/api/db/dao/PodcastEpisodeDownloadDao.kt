@@ -37,8 +37,8 @@ interface PodcastEpisodeDownloadDao {
     @Query("SELECT SUM(size) FROM podcastEpisodeDownload")
     fun totalSize(): Flow<Long>
 
-    @Query("INSERT INTO podcastEpisodeDownload (episodeId,state,progress,size,timestamp) VALUES (:episodeId,0,0,0,0)")
-    suspend fun add(episodeId: String)
+    @Query("INSERT INTO podcastEpisodeDownload (episodeId,state,progress,size,timestamp,auto) VALUES (:episodeId,0,0,0,0,:auto)")
+    suspend fun add(episodeId: String, auto: Boolean = false)
 
     @Query("UPDATE podcastEpisodeDownload SET state=:stateValue WHERE episodeId=:episodeId")
     suspend fun setState(episodeId: String, stateValue: Int)

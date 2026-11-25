@@ -55,6 +55,18 @@ class PodcastSettingsViewModel : ViewModel() {
         }
     }
 
+    fun setAutoDownloadRemoveOlder(
+        context: Context,
+        db: AppDatabase,
+        subscription: PodcastSubscriptionModel,
+        enabled: Boolean
+    ) {
+        viewModelScope.launch {
+            db.podcastSubscriptions().setAutoDownloadRemoveOlder(subscription.origin, enabled)
+            DownloadManager.autoDownloadBackfill(context, db, subscription.origin)
+        }
+    }
+
     fun toggleSubscriptionNotifications(
         db: AppDatabase,
         subscription: PodcastSubscriptionModel,

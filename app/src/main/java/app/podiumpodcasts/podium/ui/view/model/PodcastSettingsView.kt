@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.AutoDelete
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.Notifications
@@ -211,7 +212,7 @@ fun PodcastSettingsView(
                         description = stringResource(R.string.view_podcast_settings_subscription_enable_automatic_downloads_description),
 
                         index = 0,
-                        count = 3
+                        count = 4
                     )
                 }
 
@@ -253,7 +254,31 @@ fun PodcastSettingsView(
                         },
 
                         index = 1,
-                        count = 3
+                        count = 4
+                    )
+                }
+
+                item {
+                    SettingsSwitchListItem(
+                        checked = subscription.autoDownloadRemoveOlder,
+                        onCheckedChange = {
+                            vm.setAutoDownloadRemoveOlder(context, db, subscription, it)
+                        },
+
+                        icon = {
+                            Icon(
+                                Icons.Rounded.AutoDelete,
+                                stringResource(R.string.view_podcast_settings_subscription_auto_download_remove_older)
+                            )
+                        },
+                        label = stringResource(R.string.view_podcast_settings_subscription_auto_download_remove_older),
+                        description = stringResource(R.string.view_podcast_settings_subscription_auto_download_remove_older_description),
+
+                        // "All new" has no "older"
+                        enabled = subscription.enableAutoDownload && subscription.autoDownloadLimit > 0,
+
+                        index = 2,
+                        count = 4
                     )
                 }
 
@@ -273,8 +298,8 @@ fun PodcastSettingsView(
                         label = stringResource(R.string.view_podcast_settings_subscription_enable_notifications),
                         description = stringResource(R.string.view_podcast_settings_subscription_enable_notifications_description),
 
-                        index = 2,
-                        count = 3
+                        index = 3,
+                        count = 4
                     )
                 }
 
