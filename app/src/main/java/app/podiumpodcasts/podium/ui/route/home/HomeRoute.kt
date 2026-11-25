@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import android.util.LruCache
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -449,7 +451,7 @@ private fun NewEpisodeCard(
         enable = enableArtworkColors,
         seedColor = seedColor
     ) {
-        val container = MaterialTheme.colorScheme.primaryContainer
+        val (container, onContainer) = homeCardColors()
 
         Card(
             modifier = modifier.width(272.dp),
@@ -457,7 +459,7 @@ private fun NewEpisodeCard(
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
                 containerColor = container,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                contentColor = onContainer
             )
         ) {
             Box {
@@ -563,8 +565,8 @@ private fun ContinuePlayingCard(
             onClick = onClick,
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = homeCardColors().first,
+                contentColor = homeCardColors().second
             )
         ) {
             Row(
@@ -644,4 +646,17 @@ private fun rememberArtworkSeedColor(
     }
 
     return seed
+}
+
+/**
+ * Card colors inside the artwork theme. The expressive dark scheme keeps primaryContainer
+ * bright, which glares on a black page, so dark mode uses a dark surface tinted with the artwork's primary.
+ */
+@Composable
+private fun homeCardColors(): Pair<Color, Color> {
+    val scheme = MaterialTheme.colorScheme
+    return when(scheme.surface.luminance() < 0.5f) {
+        true -> lerp(scheme.surfaceContainerLow, scheme.primary, 0.28f) to scheme.onSurface
+        false -> scheme.primaryContainer to scheme.onPrimaryContainer
+    }
 }
