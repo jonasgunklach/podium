@@ -71,6 +71,7 @@ Library opens on a grid of your subscribed podcasts. Downloads, Continue playing
 
 - **Episodes to download, per podcast:** *All new* or *Latest 1–10*.
 - Turning auto-download on, or changing the number, downloads the latest episodes **right away**, without waiting for the next feed update.
+- **Remove older automatic downloads:** keep only the latest N. Episodes you downloaded yourself always stay, and so do episodes you're in the middle of.
 - **Played episodes are never auto-downloaded.** If you stream an episode (or sync marks it as played) while its download is still waiting for Wi-Fi, the download is dropped.
 
 <p align="center">
